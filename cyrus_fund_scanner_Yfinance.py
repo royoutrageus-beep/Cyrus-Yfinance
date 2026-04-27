@@ -675,102 +675,156 @@ def build_result(ticker, df_main, df_daily, mode):
 # ════════════════════════════════════════
 def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False, skip_filter=False):
     """
-    10 threads parallel — thread-safe (disk cache, bukan @st.cache_data).
-    DS rate: 1000 req/min. 10 threads × 1.5s = ~6.7 req/s → aman.
-    778 tickers ÷ 10 ≈ 2 menit vs 20 menit sequential.
+    Batch yFinance download — pattern yang SOLID dari original.
+    Download 25 ticker per batch, parallel, cache hasil.
     """
-    n  = len(stocks)
-    tf = "daily" if mode == "Swing" else "15m"
+    n   = len(stocks)
+    tf  = "daily" if mode == "Swing" else "15m"
     raw_main = {}; raw_ctx = {}
 
-    # Cache check dulu — skip yang sudah fresh
-    need_main = []
+    # ── PHASE 1: cek cache dulu ──
+    need_fetch = []
     for t in stocks:
         if not force_fresh:
             cached = cache_get(t, tf)
             if cached is not None:
                 raw_main[t] = cached; continue
-        need_main.append(t)
+        need_fetch.append(t)
 
     n_cached = len(raw_main)
     status_ph.markdown(
         f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
-        f'📊 {n_cached} cache · {len(need_main)} fetch yFinance [{tf}]...</div>',
+        f'📊 {n_cached} cache · {len(need_fetch)} fetch yFinance...</div>',
         unsafe_allow_html=True)
     pb.progress(0.05)
 
-    def _fm(t): return t, _fetch_raw(t, tf, True)
-    done = [0]
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        futs = {ex.submit(_fm, t): t for t in need_main}
-        for f in as_completed(futs):
-            done[0] += 1
-            if done[0] % 20 == 0:
-                pb.progress(0.05 + (done[0] / max(len(need_main), 1)) * 0.38)
+    # ── PHASE 2: batch download yFinance ──
+    BATCH  = 25  # 25 ticker per batch — sweet spot yFinance
+    yf_tf  = "1d" if tf == "daily" else "15m"
+    period = "60d" if yf_tf == "1d" else "5d"
+
+    def _parse_batch(raw, symbols):
+        """Parse hasil batch download yFinance → dict ticker:df"""
+        result = {}
+        for sym in symbols:
             try:
-                t, df = f.result(timeout=15)
-                if df is not None and len(df) >= 20: raw_main[t] = df
+                t = sym.replace(".JK","").upper()
+                # Multi-ticker: akses per ticker
+                if isinstance(raw.columns, pd.MultiIndex):
+                    if sym in raw.columns.get_level_values(1):
+                        df = raw.xs(sym, axis=1, level=1).copy()
+                    elif t+".JK" in raw.columns.get_level_values(1):
+                        df = raw.xs(t+".JK", axis=1, level=1).copy()
+                    else: continue
+                else:
+                    df = raw.copy()  # single ticker
+
+                df = df[["Open","High","Low","Close","Volume"]].dropna()
+                if len(df) < 5: continue
+
+                df.index = pd.to_datetime(df.index)
+                df = df.sort_index()
+                if df.index.tz is None:
+                    df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
+                else:
+                    df.index = df.index.tz_convert("Asia/Jakarta")
+
+                if len(df) >= 5:
+                    result[t] = df
             except: pass
+        return result
 
-    if True:  # Fetch daily untuk SEMUA mode — Gain & Val harus akurat
-        need_ctx = [t for t in stocks]
-        status_ph.markdown(
-            '<div style="font-family:Space Mono,monospace;font-size:11px;color:#00e5ff">'
-            '📅 Daily context untuk Gain & Val (10 threads)...</div>',
-            unsafe_allow_html=True)
-        def _fc(t): return t, _fetch_raw(t, "daily", force_fresh)
-        done2 = [0]
-        with ThreadPoolExecutor(max_workers=10) as ex:
-            futs = {ex.submit(_fc, t): t for t in need_ctx}
-            for f in as_completed(futs):
-                done2[0] += 1
-                if done2[0] % 50 == 0:
-                    pb.progress(0.43 + (done2[0] / max(n, 1)) * 0.35)
-                try:
-                    t, df = f.result(timeout=15)
-                    if df is not None and len(df) >= 2:
-                        raw_ctx[t] = df
-                except: pass
+    for i in range(0, len(need_fetch), BATCH):
+        batch_raw = need_fetch[i:i+BATCH]
+        batch_yf  = [t.replace(".JK","").upper()+".JK" for t in batch_raw]
+        pct = 0.05 + (i / max(len(need_fetch),1)) * 0.40
+        pb.progress(min(pct, 0.45))
+        if i % 50 == 0:
+            status_ph.markdown(
+                f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
+                f'⬇️ Batch {i//BATCH+1}/{(len(need_fetch)-1)//BATCH+1} · {len(raw_main)} berhasil...</div>',
+                unsafe_allow_html=True)
+        try:
+            sym_str = " ".join(batch_yf)
+            raw = yf.download(sym_str, period=period, interval=yf_tf,
+                              group_by="ticker", progress=False,
+                              threads=True, auto_adjust=True)
+            if raw is None or len(raw) == 0: continue
+            parsed = _parse_batch(raw, batch_yf)
+            for sym_jk, df in parsed.items():
+                t = sym_jk.replace(".JK","").upper()
+                cache_set(t, tf, df)
+                raw_main[t] = df
+        except: pass
 
+    # ── PHASE 3: fetch daily context untuk Gain & Val ──
+    # Selalu fetch daily untuk akurasi gain & val
+    need_daily = [t for t in list(raw_main.keys()) if t not in raw_ctx]
+    status_ph.markdown(
+        '<div style="font-family:Space Mono,monospace;font-size:11px;color:#00e5ff">'
+        f'📅 Daily context {len(need_daily)} saham...</div>',
+        unsafe_allow_html=True)
+    pb.progress(0.50)
+
+    for i in range(0, len(need_daily), BATCH):
+        batch_d   = need_daily[i:i+BATCH]
+        batch_yf  = [t+".JK" for t in batch_d]
+        pct = 0.50 + (i / max(len(need_daily),1)) * 0.30
+        pb.progress(min(pct, 0.80))
+        try:
+            sym_str = " ".join(batch_yf)
+            raw = yf.download(sym_str, period="60d", interval="1d",
+                              group_by="ticker", progress=False,
+                              threads=True, auto_adjust=True)
+            if raw is None or len(raw) == 0: continue
+            parsed = _parse_batch(raw, batch_yf)
+            for sym_jk, df in parsed.items():
+                t = sym_jk.replace(".JK","").upper()
+                if len(df) >= 2:
+                    cache_set(t, "daily", df)
+                    raw_ctx[t] = df
+        except: pass
+
+    # ── PHASE 4: process ──
     pb.progress(0.85)
     status_ph.markdown(
         f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#00ff88">'
-        f'⚙️ Processing {len(raw_main)}/{n}...</div>', unsafe_allow_html=True)
+        f'⚙️ Processing {len(raw_main)}/{n}...</div>',
+        unsafe_allow_html=True)
 
     results = []
     for ticker in stocks:
-        df_main = raw_main.get(ticker)
-        df_ctx  = raw_ctx.get(ticker) if mode != "Swing" else None
+        t = ticker.replace(".JK","").upper()
+        df_main = raw_main.get(t) or raw_main.get(ticker)
+        df_ctx  = raw_ctx.get(t) or raw_ctx.get(ticker)
         if df_main is None or len(df_main) < 20: continue
-        r = build_result(ticker, df_main, df_ctx, mode)
+        r = build_result(t, df_main, df_ctx, mode)
         if r: results.append(r)
 
     pb.progress(1.0); status_ph.empty()
     results.sort(key=lambda x: x["Prob"], reverse=True)
 
-    # Scanner Mandiri → skip filter, tampilkan semua ticker user
+    # Scanner Mandiri → tampilkan semua tanpa filter
     if skip_filter:
         return results[:DISPLAY_TOP]
 
-    # Ambil threshold aktif dari session state (bisa auto atau manual)
+    # Auto Threshold filter
     thr       = st.session_state.get("threshold", get_auto_threshold("UNKNOWN"))
     min_prob  = thr.get("min_prob", 55)
     min_score = thr.get("min_score", 15)
     min_rvol  = thr.get("min_rvol", 1.2)
     regime    = st.session_state.get("regime", "UNKNOWN")
 
-    # Filter dengan threshold — BANDAR/SUPER/HAKA selalu lolos
     filtered = []
     for r in results:
         sig        = r.get("Sinyal","")
         is_premium = any(k in sig for k in ["BANDAR","SUPER","HAKA"])
-        passes_thr = (r.get("Prob",0) >= min_prob and
-                      r.get("Score",0) >= min_score and
+        passes_thr = (r.get("Prob",0)     >= min_prob  and
+                      r.get("Score",0)    >= min_score and
                       r.get("RVOL_raw",0) >= min_rvol)
         if is_premium or passes_thr:
             filtered.append(r)
 
-    # RED: kalau filter terlalu ketat, tetap show minimal 5
     if regime == "RED" and len(filtered) < 5:
         filtered = results[:5]
 
