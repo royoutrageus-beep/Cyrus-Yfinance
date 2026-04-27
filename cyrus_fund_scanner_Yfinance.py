@@ -673,7 +673,7 @@ def build_result(ticker, df_main, df_daily, mode):
 #  Fix: fetch_ds dipanggil langsung (no @st.cache_data wrapper)
 #  Preview: tampilkan hasil sementara setiap batch
 # ════════════════════════════════════════
-def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False):
+def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False, skip_filter=False):
     """
     10 threads parallel — thread-safe (disk cache, bukan @st.cache_data).
     DS rate: 1000 req/min. 10 threads × 1.5s = ~6.7 req/s → aman.
@@ -748,23 +748,30 @@ def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False):
     pb.progress(1.0); status_ph.empty()
     results.sort(key=lambda x: x["Prob"], reverse=True)
 
-    # Auto Threshold filter berdasarkan regime IHSG
-    threshold = st.session_state.get("threshold", get_auto_threshold("UNKNOWN"))
-    min_prob  = threshold["min_prob"]
-    min_score = threshold["min_score"]
+    # Scanner Mandiri → skip filter, tampilkan semua ticker user
+    if skip_filter:
+        return results[:DISPLAY_TOP]
+
+    # Ambil threshold aktif dari session state (bisa auto atau manual)
+    thr       = st.session_state.get("threshold", get_auto_threshold("UNKNOWN"))
+    min_prob  = thr.get("min_prob", 55)
+    min_score = thr.get("min_score", 15)
+    min_rvol  = thr.get("min_rvol", 1.2)
     regime    = st.session_state.get("regime", "UNKNOWN")
 
-    # Filter — tapi BANDAR/SUPER selalu lolos
+    # Filter dengan threshold — BANDAR/SUPER/HAKA selalu lolos
     filtered = []
     for r in results:
-        sig = r.get("Sinyal","")
+        sig        = r.get("Sinyal","")
         is_premium = any(k in sig for k in ["BANDAR","SUPER","HAKA"])
-        if is_premium or (r["Prob"] >= min_prob and r["Score"] >= min_score):
+        passes_thr = (r.get("Prob",0) >= min_prob and
+                      r.get("Score",0) >= min_score and
+                      r.get("RVOL_raw",0) >= min_rvol)
+        if is_premium or passes_thr:
             filtered.append(r)
 
-    # RED regime: tambahkan warning kalau hasil terlalu sedikit
+    # RED: kalau filter terlalu ketat, tetap show minimal 5
     if regime == "RED" and len(filtered) < 5:
-        # Relax sedikit di RED — show top 5 minimal
         filtered = results[:5]
 
     return filtered[:DISPLAY_TOP]
@@ -1012,36 +1019,83 @@ if st.session_state.last_scan:
     st.caption(f"⏱️ Scan {elapsed_m}m {elapsed_s}s lalu · Refresh dalam: {m:02d}:{s:02d} · Mode: {st.session_state.scan_mode} · {lt} WIB")
 
 # ════════════════════════════════════════
-#  MARKET REGIME BANNER — Auto Threshold
+#  MARKET REGIME — fetch data
 # ════════════════════════════════════════
 _regime, _ihsg_last, _ihsg_chg = get_ihsg_regime()
-_threshold = get_auto_threshold(_regime)
+_auto_threshold = get_auto_threshold(_regime)
+_rcolor = {"GREEN":"#00ff88","RED":"#ff3d5a","YELLOW":"#ffb700","UNKNOWN":"#4a5568"}.get(_regime,"#4a5568")
+_rbg    = {"GREEN":"#0a2010","RED":"#250a0d","YELLOW":"#201000","UNKNOWN":"#0d1117"}.get(_regime,"#0d1117")
+_chg_c  = "#00ff88" if _ihsg_chg >= 0 else "#ff3d5a"
 
-_regime_color = {"GREEN":"#00ff88","RED":"#ff3d5a","YELLOW":"#ffb700","UNKNOWN":"#4a5568"}
-_regime_bg    = {"GREEN":"#0a2010","RED":"#250a0d","YELLOW":"#201000","UNKNOWN":"#0d1117"}
-_rc = _regime_color.get(_regime, "#4a5568")
-_rb = _regime_bg.get(_regime, "#0d1117")
-_chg_c = "#00ff88" if _ihsg_chg >= 0 else "#ff3d5a"
-
+# Regime banner
 st.markdown(
-    f"<div style='padding:8px 16px;border-radius:8px;background:{_rb};"
-    f"border:1px solid {_rc}44;margin-bottom:10px;"
+    f"<div style='padding:8px 16px;border-radius:8px;background:{_rbg};"
+    f"border:1px solid {_rcolor}44;margin-bottom:6px;"
     f"display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px'>"
-    f"<div style='font-family:Space Mono,monospace;font-size:11px;color:{_rc};font-weight:700'>"
-    f"IHSG REGIME: {_regime} · {_threshold['label']}</div>"
-    f"<div style='font-family:Space Mono,monospace;font-size:11px;color:#4a5568'>"
+    f"<div style='font-family:Space Mono,monospace;font-size:11px;color:{_rcolor};font-weight:700'>"
+    f"● MARKET {_regime} — {_auto_threshold['label'].split('—')[1].strip() if '—' in _auto_threshold['label'] else _auto_threshold['label']}</div>"
+    f"<div style='font-family:Space Mono,monospace;font-size:10px;color:#4a5568'>"
     f"IHSG <span style='color:#e6edf3'>{_ihsg_last:,.0f}</span> "
-    f"<span style='color:{_chg_c}'>{_ihsg_chg:+.2f}%</span> · "
-    f"Min RVOL <span style='color:#ff7b00'>{_threshold['min_rvol']}x</span> · "
-    f"Min Score <span style='color:#ffb700'>{_threshold['min_score']}</span></div>"
+    f"<span style='color:{_chg_c}'>{_ihsg_chg:+.2f}%</span></div>"
     f"</div>",
     unsafe_allow_html=True)
 
-# Simpan regime ke session state
-if "regime" not in st.session_state:
-    st.session_state.regime = _regime
-st.session_state.regime = _regime
-st.session_state.threshold = _threshold
+# ════════════════════════════════════════
+#  SCANNER SETTINGS EXPANDER — persis Theta Turbo
+#  Auto-Regime + Auto-Threshold + manual override
+# ════════════════════════════════════════
+with st.expander("⚙️ Scanner Settings", expanded=False):
+    _sc1, _sc2, _sc3 = st.columns(3)
+
+    with _sc1:
+        st.markdown('<div style="font-family:Space Mono,monospace;font-size:9px;color:#4a5568;letter-spacing:1px;margin-bottom:4px">MARKET REGIME</div>', unsafe_allow_html=True)
+        _auto_regime = st.toggle("🤖 Auto-Detect Regime", value=True, key="CF_auto_regime")
+        if _auto_regime:
+            _active_regime = _regime
+            st.markdown(
+                f'<div style="font-family:Space Mono,monospace;font-size:10px;padding:6px 10px;'
+                f'background:rgba(0,0,0,.3);border-radius:4px;color:{_rcolor};">'
+                f'Auto: {_regime} · IHSG {_ihsg_last:,.0f}</div>',
+                unsafe_allow_html=True)
+        else:
+            _active_regime = st.radio(
+                "Manual Regime", ["GREEN","YELLOW","RED"],
+                label_visibility="collapsed", key="CF_manual_regime",
+                horizontal=True)
+
+    with _sc2:
+        st.markdown('<div style="font-family:Space Mono,monospace;font-size:9px;color:#4a5568;letter-spacing:1px;margin-bottom:4px">FILTER THRESHOLD</div>', unsafe_allow_html=True)
+        _auto_thr = st.toggle("🤖 Auto-Threshold", value=True, key="CF_auto_thr")
+        _active_threshold = get_auto_threshold(_active_regime)
+        if _auto_thr:
+            _min_rvol  = _active_threshold["min_rvol"]
+            _min_score = _active_threshold["min_score"]
+            _min_prob  = _active_threshold["min_prob"]
+            st.caption(f"Auto: RVOL≥{_min_rvol}x · Score≥{_min_score} · Prob≥{_min_prob}%")
+        else:
+            _min_rvol  = st.slider("Min RVOL", 1.0, 5.0, _active_threshold["min_rvol"], 0.1, key="CF_rvol")
+            _min_score = st.slider("Min Score", 0, 30, _active_threshold["min_score"], 1, key="CF_score")
+            _min_prob  = st.slider("Min Prob%", 40, 85, _active_threshold["min_prob"], 5, key="CF_prob")
+        _min_turn = st.number_input("Min Turnover (M Rp)", value=500, step=100, key="CF_turn") * 1_000_000
+
+    with _sc3:
+        st.markdown('<div style="font-family:Space Mono,monospace;font-size:9px;color:#4a5568;letter-spacing:1px;margin-bottom:4px">TAMPILAN</div>', unsafe_allow_html=True)
+        _quick_mode = st.toggle("⚡ Quick (150 saham)", value=False, key="CF_quick",
+                                help="Scan 150 saham paling liquid saja")
+        _force_global = st.toggle("🔄 Fresh Data", value=False, key="CF_fresh_global",
+                                  help="Skip cache, paksa fetch ulang")
+        st.caption(f"🎯 Regime: {_active_regime} · Saham: {'150' if _quick_mode else len(ALL_STOCKS)}")
+        st.caption(f"RVOL≥{_min_rvol}x · Score≥{_min_score} · Prob≥{_min_prob}%")
+
+# Simpan threshold aktif ke session state
+st.session_state.regime    = _active_regime
+st.session_state.threshold = {
+    "min_rvol": _min_rvol, "min_score": _min_score,
+    "min_prob": _min_prob, "min_turn": _min_turn,
+}
+
+# Stock list berdasarkan quick mode
+_scan_stocks = ALL_STOCKS[:150] if _quick_mode else ALL_STOCKS
 
 # ════════════════════════════════════════
 #  TELEGRAM HELPER
@@ -1050,7 +1104,7 @@ def send_tele(results, mode):
     if not TOKEN or not CHAT_ID or not results: return False
     now_=datetime.now(jakarta_tz); sep="━"*24
     hdr=(f"🎯 *CYRUS FUND SCANNER*\n"
-         f"📊 Mode: *{mode}* · {now_.strftime('%H:%M:%S')} WIB\n{sep}\n")
+         f"📊 Mode: *{mode}* · Regime: *{_active_regime}* · {now_.strftime('%H:%M:%S')} WIB\n{sep}\n")
     body=""
     for r in results[:5]:
         sig=r.get("Sinyal","—")
@@ -1059,7 +1113,7 @@ def send_tele(results, mode):
                f"   `{r['Now']:,}` | Prob `{r['Prob']}%` | RVOL `{r['RVOL_str']}`\n"
                f"   TP `{r['TP']:,}` | SL `{r['SL']:,}` | +{r['Profit']:.1f}%\n"
                f"   _{r.get('Flags','')[:50]}_\n")
-    footer=f"\n{sep}\nTop {DISPLAY_TOP} dari {len(ALL_STOCKS)} saham IDX\n⚠️ _Bukan saran investasi!_"
+    footer=f"\n{sep}\nTop {DISPLAY_TOP} dari {len(ALL_STOCKS)} saham IDX · Regime: {_active_regime}\n⚠️ _Bukan saran investasi!_"
     try:
         requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",
                       data={"chat_id":CHAT_ID,"text":hdr+body+footer,"parse_mode":"Markdown"},timeout=10)
@@ -1082,7 +1136,7 @@ with tab_mom:
     st.caption(f"📊 {len(ALL_STOCKS)} saham IDX · 15M · Top {DISPLAY_TOP} rotating")
     if _btn_m:
         _pb=st.progress(0); _msg=st.empty()
-        st.session_state.res_momentum=do_scan(ALL_STOCKS,"Momentum",_pb,_msg,force_fresh=_force_m)
+        st.session_state.res_momentum=do_scan(_scan_stocks,"Momentum",_pb,_msg,force_fresh=_force_m or _force_global)
         st.session_state.last_scan=now_jkt.timestamp(); st.session_state.scan_mode="Momentum"
         save_results("Momentum",st.session_state.res_momentum,st.session_state.last_scan)
         _pb.empty()
@@ -1103,7 +1157,7 @@ with tab_int:
     st.caption(f"📊 {len(ALL_STOCKS)} saham IDX · 15M · RSI OS Bounce · Top {DISPLAY_TOP}")
     if _btn_i:
         _pb=st.progress(0); _msg=st.empty()
-        st.session_state.res_intraday=do_scan(ALL_STOCKS,"Intraday",_pb,_msg,force_fresh=_force_i)
+        st.session_state.res_intraday=do_scan(_scan_stocks,"Intraday",_pb,_msg,force_fresh=_force_i or _force_global)
         st.session_state.last_scan=now_jkt.timestamp(); st.session_state.scan_mode="Intraday"
         save_results("Intraday",st.session_state.res_intraday,st.session_state.last_scan)
         _pb.empty()
@@ -1129,7 +1183,7 @@ with tab_bsjp:
     st.caption(f"📊 {len(ALL_STOCKS)} saham · 15M · Entry 14:30–15:45 · Logic berbeda dari Intraday!")
     if _btn_b:
         _pb=st.progress(0); _msg=st.empty()
-        st.session_state.res_bsjp=do_scan(ALL_STOCKS,"BSJP",_pb,_msg,force_fresh=_force_b)
+        st.session_state.res_bsjp=do_scan(_scan_stocks,"BSJP",_pb,_msg,force_fresh=_force_b or _force_global)
         st.session_state.last_scan=now_jkt.timestamp(); st.session_state.scan_mode="BSJP"
         save_results("BSJP",st.session_state.res_bsjp,st.session_state.last_scan)
         _pb.empty()
@@ -1151,7 +1205,7 @@ with tab_swing:
     st.caption(f"📊 {len(ALL_STOCKS)} saham IDX · Daily D1 · Top {DISPLAY_TOP}")
     if _btn_s:
         _pb=st.progress(0); _msg=st.empty()
-        st.session_state.res_swing=do_scan(ALL_STOCKS,"Swing",_pb,_msg,force_fresh=_force_s)
+        st.session_state.res_swing=do_scan(_scan_stocks,"Swing",_pb,_msg,force_fresh=_force_s or _force_global)
         st.session_state.last_scan=now_jkt.timestamp(); st.session_state.scan_mode="Swing"
         save_results("Swing",st.session_state.res_swing,st.session_state.last_scan)
         _pb.empty()
@@ -1182,7 +1236,7 @@ with tab_wl:
         raw=list(dict.fromkeys([t.strip().upper() for ln in wtxt.split("\n") for t in ln.split(",") if t.strip()]))
         if raw:
             _pb=st.progress(0); _msg=st.empty()
-            st.session_state.wl_res=do_scan(raw,wmode,_pb,_msg,force_fresh=wforce)
+            st.session_state.wl_res=do_scan(raw,wmode,_pb,_msg,force_fresh=wforce,skip_filter=True)
             _pb.empty()
             if wtele and st.session_state.wl_res:
                 if send_tele(st.session_state.wl_res,wmode): st.toast("📡 Terkirim!",icon="✅")
