@@ -94,105 +94,32 @@ def load_results():
 #  STOCK LIST — 312 saham aktif IDX
 # ════════════════════════════════════════
 _RAW = [
-    "AADI", "AALI", "ABBA", "ABDA", "ABMM", "ACES", "ACRO", "ACST", "ADCP", "ADES", 
-    "ADHI", "ADMF", "ADMG", "ADMR", "ADRO", "AEGS", "AGAR", "AGII", "AGRO", "AGRS", 
-    "AHAP", "AIMS", "AISA", "AKKU", "AKPI", "AKRA", "AKSI", "ALDO", "ALII", "ALKA", 
-    "ALMI", "ALTO", "AMAG", "AMAN", "AMAR", "AMFG", "AMIN", "AMMN", "AMMS", "AMOR", 
-    "AMRT", "ANDI", "ANJT", "ANTM", "APEX", "APIC", "APII", "APLI", "APLN", "ARCI", 
-    "AREA", "ARGO", "ARII", "ARKA", "ARKO", "ARMY", "ARNA", "ARTA", "ARTI", "ARTO", 
-    "ASBI", "ASDM", "ASGR", "ASHA", "ASII", "ASJT", "ASLI", "ASLC", "ASMI", "ASPI", 
-    "ASPR", "ASRI", "ASRM", "ASSA", "ATAP", "ATIC", "ATLA", "AUTO", "AVIA", "AWAN", 
-    "AXIO", "AYAM", "AYLS", "BABA", "BABP", "BABY", "BACA", "BAIK", "BAJA", "BALI", 
-    "BANK", "BAPA", "BAPI", "BATA", "BATR", "BAUT", "BAYU", "BBCA", "BBHI", "BBKP", 
-    "BBLD", "BBMD", "BBNI", "BBRI", "BBRM", "BBSI", "BBSS", "BBTN", "BBYB", "BCAP", 
-    "BCIC", "BCIP", "BDKR", "BDMN", "BEBS", "BEEF", "BEER", "BEKS", "BELI", "BELL", 
-    "BESS", "BEST", "BFIN", "BGTG", "BHAT", "BHIT", "BIAS", "BIKA", "BIKE", "BIMA", 
-    "BINA", "BINO", "BIPI", "BIPP", "BIRD", "BISI", "BIWA", "BJBR", "BJTM", "BKDP", 
-    "BKSL", "BKSW", "BLES", "BLOG", "BLTA", "BLTZ", "BLUE", "BMAS", "BMBL", "BMHS", 
-    "BMRI", "BMSR", "BMTR", "BNBA", "BNBR", "BNGA", "BNII", "BNLI", "BOAT", "BOBA", 
-    "BOGA", "BOLA", "BOLT", "BOSS", "BPFI", "BPII", "BPTR", "BRAM", "BREN", "BRIS", 
-    "BRMS", "BRNA", "BRPT", "BRRC", "BSBK", "BSDE", "BSIM", "BSML", "BSSR", "BSWD", 
-    "BTEK", "BTEL", "BTON", "BTPN", "BTPS", "BUAH", "BUDI", "BUKA", "BUKK", "BULL", 
-    "BUMI", "BUVA", "BVIC", "BWPT", "BYAN", "CAKK", "CAMP", "CANI", "CARE", "CARS", 
-    "CASA", "CASH", "CASS", "CBDK", "CBPE", "CBRE", "CBUT", "CBMF", "CCSI", "CDIA", 
-    "CEKA", "CENT", "CFIN", "CGAS", "CHEK", "CHEM", "CHIP", "CINT", "CITA", "CITY", 
-    "CLAY", "CLEO", "CLPI", "CMNP", "CMNT", "CMPP", "CMRY", "CNKO", "CNMA", "CNTX", 
-    "COAL", "COCO", "COIN", "COWL", "CPIN", "CPRI", "CPRO", "CRAB", "CRSN", "CSAP", 
-    "CSIS", "CSMI", "CSRA", "CTBN", "CTRA", "CTTH", "CUAN", "CYBR", "DAAZ", "DADA", 
-    "DART", "DATA", "DAYA", "DCII", "DEAL", "DEFI", "DEPO", "DEWA", "DEWI", "DFAM", 
-    "DGNS", "DGWG", "DGIK", "DIGI", "DILD", "DIVA", "DKFT", "DKHH", "DLTA", "DMAS", 
-    "DMMX", "DMND", "DNAR", "DNET", "DOID", "DOOH", "DOSS", "DPNS", "DPUM", "DRMA", 
-    "DSFI", "DSNG", "DSSA", "DUCK", "DUTI", "DVLA", "DWGL", "DYAN", "EAST", "ECII", 
-    "EDGE", "EKAD", "ELIT", "ELPI", "ELSA", "ELTY", "EMAS", "EMDE", "EMTK", "ENAK", 
-    "ENRG", "ENVY", "ENZO", "EPAC", "EPMT", "ERAL", "ERAA", "ERTX", "ESIP", "ESSA", 
-    "ESTA", "ESTI", "ETWA", "EURO", "EXCL", "FAPA", "FAST", "FASW", "FILM", "FIMP", 
-    "FIRE", "FISH", "FITT", "FLMC", "FOLK", "FOOD", "FORE", "FORU", "FPNI", "FUJI", 
-    "FUTR", "FWCT", "GAMA", "GDST", "GDYR", "GEMA", "GEMS", "GGRP", "GGRM", "GHON", 
-    "GIAA", "GJTL", "GLOB", "GLVA", "GMFI", "GMTD", "GOLF", "GOLD", "GOLL", "GOOD", 
-    "GOTO", "GPRA", "GPSO", "GRIA", "GRPH", "GRPM", "GRII", "GSMF", "GTBO", "GTRA", 
-    "GTSI", "GULA", "GUNA", "GWSA", "GZCO", "HADE", "HAIS", "HAJJ", "HALO", "HATM", 
-    "HBAT", "HDFA", "HDIT", "HEAL", "HELI", "HERO", "HEXA", "HGII", "HILL", "HITS", 
-    "HKMU", "HMSP", "HOKI", "HOME", "HOMI", "HOPE", "HOTL", "HRME", "HRTA", "HRUM", 
-    "HUMI", "HYGN", "IATA", "IBFN", "IBOS", "IBST", "ICBP", "ICON", "IDEA", "IDPR", 
-    "IFII", "IFSH", "IGAR", "IIKP", "IKAI", "IKAN", "IKBI", "IKPM", "IMAS", "IMJS", 
-    "IMPC", "INAF", "INAI", "INCF", "INCI", "INCO", "INDF", "INDO", "INDR", "INDS", 
-    "INDX", "INDY", "INET", "INKP", "INOV", "INPC", "INPP", "INPS", "INRU", "INTA", 
-    "INTD", "INTP", "IOTF", "IPAC", "IPCC", "IPCM", "IPOL", "IPPE", "IPTV", "IRRA", 
-    "IRSX", "ISAP", "ISAT", "ISEA", "ISSP", "ITIC", "ITMA", "ITMG", "JAAS", "JARR", 
-    "JAST", "JATI", "JAVA", "JAYA", "JECC", "JGLE", "JIHD", "JKON", "JMAS", "JPFA", 
-    "JRPT", "JSKY", "JSMR", "JSPT", "JTPE", "KAEF", "KAQI", "KARW", "KARY", "KAST", 
-    "KAYU", "KBAG", "KBLI", "KBLM", "KBLV", "KBRI", "KDSI", "KDTN", "KEEN", "KEJU", 
-    "KETR", "KIAS", "KICI", "KIJA", "KING", "KINO", "KIOS", "KJEN", "KKES", "KKGI", 
-    "KLAS", "KLBF", "KLIN", "KMDS", "KMTR", "KOBX", "KOCI", "KOIN", "KOKA", "KONI", 
-    "KOPI", "KOTA", "KPIG", "KRAH", "KRAS", "KREN", "KSIX", "KUAS", "LABA", "LABS", 
-    "LAJU", "LAND", "LAPD", "LCGP", "LCKM", "LEAD", "LFLO", "LIFE", "LINK", "LION", 
-    "LIVE", "LMAS", "LMPI", "LMSH", "LOPI", "LPCK", "LPGI", "LPIN", "LPKR", "LPLI", 
-    "LPPF", "LPPS", "LRNA", "LSIP", "LTLS", "LUCK", "LUCY", "MAAS", "MABA", "MADA", 
-    "MAGP", "MAHA", "MAIN", "MANG", "MAPA", "MAPB", "MAPI", "MARI", "MARK", "MASA", 
-    "MASB", "MAYA", "MBAP", "MBMA", "MBSS", "MBTO", "MCAS", "MCOL", "MCOR", "MDIA", 
-    "MDKA", "MDKI", "MDLA", "MDLN", "MDRN", "MEDC", "MEDS", "MEGA", "MEJA", "MENN", 
-    "MERI", "MERK", "META", "MFMI", "MGNA", "MGRO", "MHKI", "MICE", "MIDI", "MIKA", 
-    "MINA", "MINE", "MIRA", "MITI", "MKAP", "MKPI", "MKTR", "MLBI", "MLIA", "MLPL", 
-    "MLPT", "MMLP", "MMIX", "MNCN", "MOLI", "MORA", "MPOW", "MPMX", "MPPA", "MPRO", 
-    "MPXL", "MRAT", "MREI", "MSIE", "MSIN", "MSJA", "MSKY", "MSTI", "MTDL", "MTEL", 
-    "MTFN", "MTLA", "MTMH", "MTPS", "MTRA", "MTRN", "MTSM", "MTWI", "MUTU", "MYOH", 
-    "MYOR", "MYTX", "NAIK", "NANO", "NASA", "NASI", "NATO", "NAYZ", "NCKL", "NELY", 
-    "NEST", "NETV", "NICE", "NICK", "NICL", "NIKL", "NINE", "NIRO", "NISP", "NOBU", 
-    "NPGF", "NRCA", "NSSS", "NTBK", "NUSA", "NZIA", "OASA", "OBAT", "OBMD", "OCAP", 
-    "OILS", "OKAS", "OLIV", "OMED", "OMRE", "OPMS", "PACK", "PADA", "PADI", "PALM", 
-    "PAMG", "PANI", "PANR", "PANS", "PART", "PBID", "PBSA", "PBRX", "PCAR", "PDES", 
-    "PDPP", "PEGE", "PEHA", "PELI", "PENT", "PERW", "PEVE", "PGAS", "PGEO", "PGJO", 
-    "PGLI", "PGUN", "PICO", "PIPA", "PJAA", "PJHB", "PKPK", "PLAN", "PLAS", "PLIN", 
-    "PMJS", "PMMP", "PMUI", "PNBN", "PNBS", "PNGO", "PNIN", "PNLF", "PNSE", "POLA", 
-    "POLI", "POLL", "POLU", "POLY", "POOL", "PORT", "POSA", "POWR", "PPGL", "PPRI", 
-    "PPRE", "PPRO", "PRAY", "PRDA", "PRIM", "PSAB", "PSAT", "PSDN", "PSGO", "PSKT", 
-    "PSSI", "PTBA", "PTDU", "PTIS", "PTMP", "PTMR", "PTPP", "PTPS", "PTPW", "PTRO", 
-    "PTSN", "PTSP", "PUDP", "PURA", "PURE", "PURI", "PWON", "PYFA", "PZZA", "RAAM", 
-    "RAFI", "RAJA", "RALS", "RANC", "RATU", "RBMS", "RCCC", "RDTX", "REAL", "RELF", 
-    "RELI", "REPP", "RGAS", "RICY", "RIGS", "RIMO", "RISE", "RLCO", "RMBA", "RMKE", 
-    "RMKO", "RMLP", "ROCK", "RODA", "ROLI", "RONY", "ROTI", "RSCH", "RSGK", "RUIS", 
-    "RUNS", "SAFE", "SAGE", "SAGI", "SAME", "SAMF", "SAMR", "SAMP", "SANO", "SAPX", 
-    "SATU", "SBAT", "SBMA", "SCCO", "SCMA", "SCNP", "SCPI", "SDMU", "SDPC", "SDRA", 
-    "SEMA", "SFAN", "SGER", "SGGH", "SGJL", "SGRO", "SHID", "SHIP", "SICO", "SIDO", 
-    "SIER", "SILO", "SIMA", "SIMP", "SINI", "SIPD", "SKBM", "SKLT", "SKRN", "SKYB", 
-    "SLIS", "SMAR", "SMDM", "SMDR", "SMGA", "SMGR", "SMKM", "SMKL", "SMLE", "SMMA", 
-    "SMMT", "SMRA", "SMRU", "SMSM", "SNLK", "SOCI", "SOFA", "SOHO", "SOLA", "SONA", 
-    "SOSS", "SOTS", "SOUL", "SPMA", "SPRE", "SPTO", "SQMI", "SRAJ", "SREI", "SRIL", 
-    "SRSN", "SRTG", "SSIA", "SSMS", "SSTM", "STAA", "STAR", "STRK", "STTP", "SUGI", 
-    "SULI", "SUNI", "SUPA", "SUPR", "SURE", "SWAT", "SWID", "SYAI", "TALF", "TAMA", 
-    "TAMU", "TAPG", "TARA", "TAXI", "TAYS", "TBIG", "TBLA", "TBMS", "TCID", "TCPI", 
-    "TDPM", "TEBE", "TECH", "TELE", "TFAS", "TFCO", "TGKA", "TGRA", "TGUK", "TIFA", 
-    "TINS", "TIRA", "TIRT", "TKIM", "TLDN", "TLKM", "TMAS", "TMPO", "TNCA", "TOBA", 
-    "TOOL", "TOPS", "TOSK", "TOTL", "TOTO", "TOWR", "TOYS", "TPAI", "TPIA", "TPMA", 
-    "TRAM", "TRGU", "TRIL", "TRIM", "TRIN", "TRIO", "TRIS", "TRJA", "TRON", "TRST", 
-    "TRUE", "TRUK", "TRUS", "TSPC", "TUGU", "TULT", "TYRE", "UANG", "UCID", "UDNG", 
-    "UFOE", "ULTJ", "UNIC", "UNIQ", "UNIT", "UNSP", "UNTR", "UNVR", "URBN", "UVCR", 
-    "VAST", "VATE", "VCOK", "VERN", "VICI", "VICO", "VINS", "VISA", "VISI", "VIVA", 
-    "VKTR", "VOKS", "VOSS", "VRNA", "VTNY", "WAPO", "WBSA", "WEGE", "WEHA", "WGSH", 
-    "WICO", "WIDI", "WIFI", "WIIM", "WIKA", "WINE", "WINR", "WINS", "WIRG", "WITA", 
-    "WMPP", "WMUU", "WOMF", "WONS", "WOOD", "WOWS", "WPOW", "WSBP", "WSKT", "WTON", 
-    "YELO", "YOII", "YPAS", "YULE", "YUPI", "ZATA", "ZBRA", "ZENI", "ZINC", "ZONE", 
-    "ZYRX"
+    "AALI","ACES","ACST","ADES","ADHI","ADMF","ADMG","ADMR","ADRO","AGII","AGRO","AGRS",
+    "AKPI","AKRA","AKSI","ALDO","ALKA","ALMI","AMAG","AMAR","AMFG","AMIN","AMMS","AMOR",
+    "AMRT","ANDI","ANJT","ANTM","APLN","ARCI","ARNA","ARTO","ASDM","ASGR","ASII","ASRI",
+    "ASRM","ASSA","AUTO","AVIA","AWAN","AXIO","BACA","BBCA","BBHI","BBKP","BBLD","BBMD",
+    "BBNI","BBRI","BBRM","BBSI","BBSS","BBTN","BBYB","BCAP","BCIC","BCIP","BDMN","BEST",
+    "BFIN","BIRD","BISI","BJBR","BJTM","BLTZ","BLUE","BMBL","BMRI","BMTR","BNGA","BNII",
+    "BNLI","BRAM","BRIS","BRNA","BRPT","BSDE","BSSR","BTON","BTPS","BUDI","BULL","BUMI",
+    "BUKA","BYAN","CAMP","CASH","CASS","CBRE","CEKA","CINT","CITA","CITY","CLEO","CMRY",
+    "COCO","CPIN","CPRO","CSAP","CSIS","CTBN","CTRA","CUAN","DART","DCII","DGNS","DIGI",
+    "DILD","DLTA","DNET","DOID","DPNS","DSSA","DUTI","DVLA","EKAD","ELPI","ELSA","EMAS",
+    "EMTK","EPMT","ERAA","ESSA","EXCL","FAST","FASW","FISH","GDST","GEMA","GEMS","GGRM",
+    "GGRP","GIAA","GJTL","GOLD","GOOD","GOTO","GPRA","HEAL","HERO","HEXA","HITS","HMSP",
+    "HOKI","HRTA","HRUM","ICBP","IMAS","IMPC","INAF","INAI","INCO","INDF","INET","INFO",
+    "INPP","INTA","INTP","IPCC","IPCM","ISAT","ISSP","ITMG","JECC","JIHD","JKON","JPFA",
+    "JRPT","JSMR","KAEF","KBLI","KBLM","KDSI","KEJU","KIJA","KING","KINO","KKGI","KLBF",
+    "LPCK","LPGI","LPIN","LPKR","LPPF","LSIP","LTLS","LUCK","MAIN","MAPI","MARI","MARK",
+    "MASA","MAYA","MBAP","MBMA","MBSS","MBTO","MDKA","MDLN","MEDC","MEGA","MIDI","MIKA",
+    "MKPI","MLBI","MLIA","MLPT","MNCN","MYOR","MTDL","MTEL","MTLA","MYOH","NELY","NFCX",
+    "NOBU","NRCA","PANI","PANR","PANS","PEHA","PGAS","PGEO","PGUN","PICO","PJAA","PLIN",
+    "PNLF","POLU","PORT","POWR","PRDA","PRIM","PSSI","PTBA","PTRO","PWON","RAJA","RALS",
+    "RICY","RIGS","RISE","RODA","ROTI","SAFE","SAME","SCCO","SCMA","SDRA","SGRO","SHIP",
+    "SILO","SIMP","SKBM","SMAR","SMCB","SMDR","SMGR","SMMA","SMRA","SMSM","SOHO","SPMA",
+    "SPTO","SRIL","SRTG","SSIA","SSMS","STAA","STTP","SUNU","SUPR","AMMN","TBIG","TBLA",
+    "TCID","TCPI","TECH","TELE","TGKA","TINS","TKIM","TLKM","TMAS","TOBA","TOWR","TRGU",
+    "TRIM","TRIS","TRST","TRUE","TRUK","TSPC","TUGU","UNIC","UNIT","UNTR","UNVR","VOKS",
+    "WEGE","WEHA","WICO","WIFI","WIKA","WINE","WINS","WITA","WOOD","WSKT","WTON","ZINC",
 ]
 ALL_STOCKS = list(dict.fromkeys(_RAW))
 STOCKS_30  = ALL_STOCKS  # backward compat
@@ -201,76 +128,49 @@ STOCKS_60  = ALL_STOCKS
 # ════════════════════════════════════════
 #  YFINANCE FETCH — BATCH (pattern solid)
 # ════════════════════════════════════════
-def _parse_yf_batch(raw, symbols):
+def _fetch_one_yf(ticker, interval="15m", force_fresh=False):
     """
-    Parse hasil batch yf.download → dict ticker:df
-    yFinance format:
-    - Multi ticker: MultiIndex columns → (field, ticker) yaitu level0=field, level1=ticker
-    - Single ticker: flat columns → Open/High/Low/Close/Volume
+    Fetch 1 ticker via yFinance — simple, no batch complexity.
+    Ini yang pasti work di semua versi yFinance.
     """
-    result = {}
+    tf_map = {"daily":"1d","15m":"15m","1d":"1d"}
+    yf_tf  = tf_map.get(interval, "15m")
+    period = "60d" if yf_tf=="1d" else "5d"
 
-    # Single ticker — flat columns
-    if not isinstance(raw.columns, pd.MultiIndex):
-        if len(symbols) == 1:
-            sym = symbols[0]
-            t   = sym.replace(".JK","").upper()
-            try:
-                df = raw.copy()
-                df.columns = [str(c).title() for c in df.columns]
-                needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
-                if len(needed) >= 4:
-                    df = df[needed].dropna()
-                    df.index = pd.to_datetime(df.index)
-                    df = df.sort_index()
-                    if df.index.tz is None:
-                        df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
-                    else:
-                        df.index = df.index.tz_convert("Asia/Jakarta")
-                    if len(df) >= 5:
-                        result[t] = df
-            except: pass
-        return result
-
-    # Multi ticker — MultiIndex (field, ticker)
-    # Level 0 = field name, Level 1 = ticker symbol
+    if not force_fresh:
+        cached = cache_get(ticker, interval)
+        if cached is not None: return cached
     try:
-        lvl0 = [str(x) for x in raw.columns.get_level_values(0).unique()]
-        lvl1 = [str(x) for x in raw.columns.get_level_values(1).unique()]
-    except: return result
+        sym = f"{ticker}.JK"
+        df  = yf.download(sym, period=period, interval=yf_tf,
+                          progress=False, auto_adjust=True)
+        if df is None or len(df) < 5: return None
 
-    for sym in symbols:
-        t = sym.replace(".JK","").upper()
-        try:
-            # Coba level 1 = ticker (format baru yfinance)
-            if sym in lvl1:
-                df = raw.xs(sym, axis=1, level=1).copy()
-            elif t in lvl1:
-                df = raw.xs(t, axis=1, level=1).copy()
-            # Coba level 0 = ticker (format lama)
-            elif sym in lvl0:
-                df = raw.xs(sym, axis=1, level=0).copy()
-            elif t in lvl0:
-                df = raw.xs(t, axis=1, level=0).copy()
-            else:
-                continue
+        # Flatten MultiIndex kalau ada (yfinance kadang wrap single ticker juga)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
 
-            df.columns = [str(c).title() for c in df.columns]
-            needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
-            if len(needed) < 4: continue
-            df = df[needed].dropna()
-            if len(df) < 5: continue
-            df.index = pd.to_datetime(df.index)
-            df = df.sort_index()
-            if df.index.tz is None:
-                df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
-            else:
-                df.index = df.index.tz_convert("Asia/Jakarta")
-            if len(df) >= 5:
-                result[t] = df
-        except: pass
+        df.columns = [str(c).strip() for c in df.columns]
+        # Normalize column names
+        col_map = {c: c.title() for c in df.columns}
+        df = df.rename(columns=col_map)
 
-    return result
+        needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
+        if len(needed) < 4: return None
+
+        df = df[needed].dropna()
+        df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
+        if df.index.tz is None:
+            df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
+        else:
+            df.index = df.index.tz_convert("Asia/Jakarta")
+
+        if len(df) < 5: return None
+        cache_set(ticker, interval, df)
+        return df
+    except:
+        return None
 
 def fetch_batch_yf(tickers, interval="15m", force_fresh=False):
     """
@@ -550,119 +450,106 @@ def build_result(ticker, df_main, df_daily, mode):
 #  SCAN ENGINE — yFinance batch
 # ════════════════════════════════════════
 def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False, skip_filter=False):
-    n  = len(stocks); tf = "daily" if mode=="Swing" else "15m"
-    raw_main={}; raw_ctx={}
+    """
+    Per-ticker yFinance + ThreadPoolExecutor 15 threads.
+    Simple & reliable — no batch complexity.
+    """
+    n  = len(stocks)
+    tf = "daily" if mode=="Swing" else "15m"
+    raw_main = {}; raw_ctx = {}
 
-    # Phase 1: fetch main TF batch
+    # Cache check dulu
+    need = []
+    for t in stocks:
+        if not force_fresh:
+            cached = cache_get(t, tf)
+            if cached is not None: raw_main[t] = cached; continue
+        need.append(t)
+
     status_ph.markdown(
         f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
-        f'⬇️ Fetching {n} saham ({tf}) via yFinance...</div>', unsafe_allow_html=True)
+        f'⬇️ {len(raw_main)} cache · {len(need)} fetch yFinance [{tf}]...</div>',
+        unsafe_allow_html=True)
     pb.progress(0.05)
 
-    need=[]
-    for t in stocks:
-        cached=cache_get(t,tf)
-        if not force_fresh and cached is not None: raw_main[t]=cached
-        else: need.append(t)
+    # Parallel fetch 15 threads
+    done = [0]
+    def _fm(t):
+        return t, _fetch_one_yf(t, tf, True)
 
-    BATCH=25
-    yf_tf="1d" if tf=="daily" else "15m"
-    period="60d" if yf_tf=="1d" else "5d"
-    for i in range(0,len(need),BATCH):
-        batch=need[i:i+BATCH]; syms=[t+".JK" for t in batch]
-        pb.progress(0.05+(i/max(len(need),1))*0.38)
-        if i%50==0:
-            status_ph.markdown(
-                f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
-                f'⬇️ Batch {i//BATCH+1} · {len(raw_main)} berhasil...</div>',
-                unsafe_allow_html=True)
-        try:
-            raw=yf.download(" ".join(syms),period=period,interval=yf_tf,
-                            group_by="ticker",progress=False,threads=True,auto_adjust=True)
-            if raw is None or len(raw)==0:
-                # Fallback: download 1 per 1 kalau batch gagal
-                for sym,t in zip(syms,batch):
-                    try:
-                        df=yf.download(sym,period=period,interval=yf_tf,
-                                       progress=False,auto_adjust=True)
-                        if df is not None and len(df)>=5:
-                            parsed=_parse_yf_batch(df,[sym])
-                            for tk,dff in parsed.items():
-                                cache_set(tk,tf,dff); raw_main[tk]=dff
-                    except: pass
-                continue
-            parsed=_parse_yf_batch(raw, syms)
-            for t,df in parsed.items():
-                cache_set(t,tf,df); raw_main[t]=df
-            if parsed:
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        futs = {ex.submit(_fm, t): t for t in need}
+        for f in as_completed(futs):
+            done[0] += 1
+            pb.progress(0.05 + (done[0]/max(len(need),1))*0.38)
+            if done[0] % 15 == 0:
                 status_ph.markdown(
                     f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
-                    f'⬇️ Batch {i//BATCH+1} · Got {len(parsed)}/{len(batch)} · Total: {len(raw_main)}</div>',
+                    f'⬇️ {done[0]}/{len(need)} · OK: {len(raw_main)+done[0]}...</div>',
                     unsafe_allow_html=True)
-        except: pass
+            try:
+                t, df = f.result(timeout=20)
+                if df is not None and len(df) >= 20:
+                    raw_main[t] = df
+            except: pass
 
-    # Phase 2: daily context (gain & val)
-    need_d=[t for t in list(raw_main.keys()) if not cache_get(t,"daily") or force_fresh]
+    # Daily context untuk gain & val
+    need_d = [t for t in raw_main if force_fresh or cache_get(t,"daily") is None]
+    for t in raw_main:
+        if t not in need_d:
+            c = cache_get(t, "daily")
+            if c is not None: raw_ctx[t] = c
+
     status_ph.markdown(
-        '<div style="font-family:Space Mono,monospace;font-size:11px;color:#00e5ff">'
+        f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#00e5ff">'
         f'📅 Daily context {len(need_d)} saham...</div>', unsafe_allow_html=True)
     pb.progress(0.50)
-    for i in range(0,len(need_d),BATCH):
-        batch=need_d[i:i+BATCH]; syms=[t+".JK" for t in batch]
-        pb.progress(0.50+(i/max(len(need_d),1))*0.30)
-        try:
-            raw=yf.download(" ".join(syms),period="60d",interval="1d",
-                            group_by="ticker",progress=False,threads=True,auto_adjust=True)
-            if raw is None or len(raw)==0:
-                for sym in syms:
-                    try:
-                        df=yf.download(sym,period="60d",interval="1d",
-                                       progress=False,auto_adjust=True)
-                        if df is not None and len(df)>=2:
-                            parsed=_parse_yf_batch(df,[sym])
-                            for tk,dff in parsed.items():
-                                cache_set(tk,"daily",dff); raw_ctx[tk]=dff
-                    except: pass
-                continue
-            parsed=_parse_yf_batch(raw, syms)
-            for t,df in parsed.items():
-                if len(df)>=2: cache_set(t,"daily",df); raw_ctx[t]=df
-        except: pass
-        time.sleep(0.05)
 
-    # Phase 3: juga ambil daily dari cache kalau ada
-    for t in raw_main:
-        if t not in raw_ctx:
-            cached_d=cache_get(t,"daily")
-            if cached_d is not None: raw_ctx[t]=cached_d
+    done2 = [0]
+    def _fd(t):
+        return t, _fetch_one_yf(t, "daily", True)
 
-    # Phase 4: process
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        futs = {ex.submit(_fd, t): t for t in need_d}
+        for f in as_completed(futs):
+            done2[0] += 1
+            pb.progress(0.50 + (done2[0]/max(len(need_d),1))*0.30)
+            try:
+                t, df = f.result(timeout=20)
+                if df is not None and len(df) >= 2:
+                    raw_ctx[t] = df
+            except: pass
+
+    # Process
     pb.progress(0.85)
     status_ph.markdown(
         f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#00ff88">'
         f'⚙️ Processing {len(raw_main)}/{n}...</div>', unsafe_allow_html=True)
-    results=[]
-    for t in stocks:
-        df_main=raw_main.get(t)
-        df_ctx=raw_ctx.get(t)
-        if df_main is None or len(df_main)<20: continue
-        r=build_result(t,df_main,df_ctx,mode)
-        if r: results.append(r)
-    pb.progress(1.0); status_ph.empty()
-    results.sort(key=lambda x:x["Prob"],reverse=True)
 
-    # Scanner Mandiri → bypass filter, tampilkan semua
+    results = []
+    for t in stocks:
+        df_main = raw_main.get(t)
+        df_ctx  = raw_ctx.get(t)
+        if df_main is None or len(df_main) < 20: continue
+        r = build_result(t, df_main, df_ctx, mode)
+        if r: results.append(r)
+
+    pb.progress(1.0); status_ph.empty()
+    results.sort(key=lambda x: x["Prob"], reverse=True)
+
     if skip_filter: return results[:DISPLAY_TOP]
 
-    # Auto threshold filter
-    thr=st.session_state.get("threshold",get_auto_threshold("UNKNOWN"))
-    min_prob=thr.get("min_prob",55); min_score=thr.get("min_score",15); min_rvol=thr.get("min_rvol",1.2)
-    regime=st.session_state.get("regime","UNKNOWN")
-    filtered=[r for r in results if
-              any(k in r.get("Sinyal","") for k in ["BANDAR","HAKA","SUPER"]) or
-              (r["Prob"]>=min_prob and r["Score"]>=min_score and r["RVOL_raw"]>=min_rvol)]
+    thr      = st.session_state.get("threshold", get_auto_threshold("UNKNOWN"))
+    min_prob = thr.get("min_prob", 55)
+    min_score= thr.get("min_score", 15)
+    min_rvol = thr.get("min_rvol", 1.2)
+    regime   = st.session_state.get("regime", "UNKNOWN")
+    filtered = [r for r in results if
+                any(k in r.get("Sinyal","") for k in ["HAKA","SUPER","REBOUND"]) or
+                (r["Prob"]>=min_prob and r["Score"]>=min_score and r["RVOL_raw"]>=min_rvol)]
     if regime=="RED" and len(filtered)<5: filtered=results[:5]
     return filtered[:DISPLAY_TOP]
+
 
 # ════════════════════════════════════════
 #  PAGE CONFIG + CSS
