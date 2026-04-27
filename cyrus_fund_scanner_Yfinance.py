@@ -14,13 +14,79 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # ════════════════════════════════════════
 #  CONFIG
 # ════════════════════════════════════════
-DISPLAY_TOP    = 50    # top 50 hasil scan
-CACHE_TTL_15M  = 300   # 5 menit untuk 15m data
-CACHE_TTL_D    = 3600  # 1 jam untuk daily data
+DISPLAY_TOP    = 50
+CACHE_TTL_15M  = 300
+CACHE_TTL_D    = 3600
 
-# Cache directory — /tmp di cloud, home di lokal
+# Timezone
+jakarta_tz = pytz.timezone("Asia/Jakarta")
+
+# Cache directory
 CACHE_DIR = Path("/tmp/cyrus_cache") if Path("/tmp").exists() else Path.home() / ".cyrus_cache"
 CACHE_DIR.mkdir(exist_ok=True)
+
+# Telegram
+try:
+    TOKEN   = st.secrets.get("TELEGRAM_TOKEN", "")
+    CHAT_ID = st.secrets.get("TELEGRAM_CHAT_ID", "")
+except:
+    TOKEN = ""; CHAT_ID = ""
+
+# ════════════════════════════════════════
+#  DISK CACHE — thread-safe
+# ════════════════════════════════════════
+CACHE_TTL = 300  # 5 menit default
+_mem      = {}
+_mem_lock = threading.Lock()
+
+def _ck(ticker, tf): return f"cf_{ticker}_{tf}"
+
+def _disk_get(key):
+    fp = CACHE_DIR / f"{key}.pkl"
+    try:
+        if fp.exists():
+            d = pickle.loads(fp.read_bytes())
+            if time.time() - d["ts"] < CACHE_TTL: return d["df"]
+    except: pass
+    return None
+
+def _disk_set(key, df):
+    try: (CACHE_DIR / f"{key}.pkl").write_bytes(pickle.dumps({"ts": time.time(), "df": df}))
+    except: pass
+
+def cache_get(ticker, tf):
+    key = _ck(ticker, tf)
+    with _mem_lock:
+        if key in _mem:
+            ts, df = _mem[key]
+            if time.time() - ts < CACHE_TTL: return df
+    df = _disk_get(key)
+    if df is not None:
+        with _mem_lock: _mem[key] = (time.time(), df)
+    return df
+
+def cache_set(ticker, tf, df):
+    key = _ck(ticker, tf)
+    with _mem_lock: _mem[key] = (time.time(), df)
+    _disk_set(key, df)
+
+# Results persistence
+RESULTS_FILE = CACHE_DIR / "last_results.pkl"
+RESULTS_TTL  = 600  # 10 menit
+
+def save_results(mode, results, scan_ts):
+    try:
+        RESULTS_FILE.write_bytes(pickle.dumps(
+            {"mode": mode, "results": results, "ts": scan_ts}))
+    except: pass
+
+def load_results():
+    try:
+        if RESULTS_FILE.exists():
+            d = pickle.loads(RESULTS_FILE.read_bytes())
+            if time.time() - d["ts"] < RESULTS_TTL: return d
+    except: pass
+    return None
 
 def _fetch_yf(ticker, interval="15m", force_fresh=False):
     """
