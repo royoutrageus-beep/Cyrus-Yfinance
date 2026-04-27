@@ -119,7 +119,7 @@ _RAW = [
     "SPTO","SRIL","SRTG","SSIA","SSMS","STAA","STTP","SUNU","SUPR","AMMN","TBIG","TBLA",
     "TCID","TCPI","TECH","TELE","TGKA","TINS","TKIM","TLKM","TMAS","TOBA","TOWR","TRGU",
     "TRIM","TRIS","TRST","TRUE","TRUK","TSPC","TUGU","UNIC","UNIT","UNTR","UNVR","VOKS",
-    "WEGE","WEHA","WICO","WIFI","WIKA","WINE","WINS","WITA","WOOD","WSKT","WTON","ZINC",
+    "WBSA","WEGE","WEHA","WICO","WIFI","WIKA","WINE","WINS","WITA","WOOD","WSKT","WTON","ZINC",
 ]
 ALL_STOCKS = list(dict.fromkeys(_RAW))
 STOCKS_30  = ALL_STOCKS  # backward compat
