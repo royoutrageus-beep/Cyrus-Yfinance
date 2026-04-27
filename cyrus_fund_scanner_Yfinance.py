@@ -202,35 +202,74 @@ STOCKS_60  = ALL_STOCKS
 #  YFINANCE FETCH — BATCH (pattern solid)
 # ════════════════════════════════════════
 def _parse_yf_batch(raw, symbols):
-    """Parse hasil batch yf.download → dict ticker:df"""
+    """
+    Parse hasil batch yf.download → dict ticker:df
+    yFinance format:
+    - Multi ticker: MultiIndex columns → (field, ticker) yaitu level0=field, level1=ticker
+    - Single ticker: flat columns → Open/High/Low/Close/Volume
+    """
     result = {}
-    for sym in symbols:
-        try:
-            t = sym.replace(".JK","").upper()
-            if isinstance(raw.columns, pd.MultiIndex):
-                lvl1 = raw.columns.get_level_values(1)
-                if sym in lvl1:
-                    df = raw.xs(sym, axis=1, level=1).copy()
-                else: continue
-            else:
-                df = raw.copy()
 
-            # Rename ke standard
-            df = df.rename(columns=str.title)
+    # Single ticker — flat columns
+    if not isinstance(raw.columns, pd.MultiIndex):
+        if len(symbols) == 1:
+            sym = symbols[0]
+            t   = sym.replace(".JK","").upper()
+            try:
+                df = raw.copy()
+                df.columns = [str(c).title() for c in df.columns]
+                needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
+                if len(needed) >= 4:
+                    df = df[needed].dropna()
+                    df.index = pd.to_datetime(df.index)
+                    df = df.sort_index()
+                    if df.index.tz is None:
+                        df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
+                    else:
+                        df.index = df.index.tz_convert("Asia/Jakarta")
+                    if len(df) >= 5:
+                        result[t] = df
+            except: pass
+        return result
+
+    # Multi ticker — MultiIndex (field, ticker)
+    # Level 0 = field name, Level 1 = ticker symbol
+    try:
+        lvl0 = [str(x) for x in raw.columns.get_level_values(0).unique()]
+        lvl1 = [str(x) for x in raw.columns.get_level_values(1).unique()]
+    except: return result
+
+    for sym in symbols:
+        t = sym.replace(".JK","").upper()
+        try:
+            # Coba level 1 = ticker (format baru yfinance)
+            if sym in lvl1:
+                df = raw.xs(sym, axis=1, level=1).copy()
+            elif t in lvl1:
+                df = raw.xs(t, axis=1, level=1).copy()
+            # Coba level 0 = ticker (format lama)
+            elif sym in lvl0:
+                df = raw.xs(sym, axis=1, level=0).copy()
+            elif t in lvl0:
+                df = raw.xs(t, axis=1, level=0).copy()
+            else:
+                continue
+
+            df.columns = [str(c).title() for c in df.columns]
             needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
             if len(needed) < 4: continue
             df = df[needed].dropna()
             if len(df) < 5: continue
-
             df.index = pd.to_datetime(df.index)
             df = df.sort_index()
             if df.index.tz is None:
                 df.index = df.index.tz_localize("UTC").tz_convert("Asia/Jakarta")
             else:
                 df.index = df.index.tz_convert("Asia/Jakarta")
-
-            result[t] = df
+            if len(df) >= 5:
+                result[t] = df
         except: pass
+
     return result
 
 def fetch_batch_yf(tickers, interval="15m", force_fresh=False):
@@ -540,12 +579,27 @@ def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False, ski
         try:
             raw=yf.download(" ".join(syms),period=period,interval=yf_tf,
                             group_by="ticker",progress=False,threads=True,auto_adjust=True)
-            if raw is None or len(raw)==0: continue
+            if raw is None or len(raw)==0:
+                # Fallback: download 1 per 1 kalau batch gagal
+                for sym,t in zip(syms,batch):
+                    try:
+                        df=yf.download(sym,period=period,interval=yf_tf,
+                                       progress=False,auto_adjust=True)
+                        if df is not None and len(df)>=5:
+                            parsed=_parse_yf_batch(df,[sym])
+                            for tk,dff in parsed.items():
+                                cache_set(tk,tf,dff); raw_main[tk]=dff
+                    except: pass
+                continue
             parsed=_parse_yf_batch(raw, syms)
             for t,df in parsed.items():
                 cache_set(t,tf,df); raw_main[t]=df
+            if parsed:
+                status_ph.markdown(
+                    f'<div style="font-family:Space Mono,monospace;font-size:11px;color:#ff7b00">'
+                    f'⬇️ Batch {i//BATCH+1} · Got {len(parsed)}/{len(batch)} · Total: {len(raw_main)}</div>',
+                    unsafe_allow_html=True)
         except: pass
-        time.sleep(0.05)
 
     # Phase 2: daily context (gain & val)
     need_d=[t for t in list(raw_main.keys()) if not cache_get(t,"daily") or force_fresh]
@@ -559,7 +613,17 @@ def do_scan(stocks, mode, pb, status_ph, preview_ph=None, force_fresh=False, ski
         try:
             raw=yf.download(" ".join(syms),period="60d",interval="1d",
                             group_by="ticker",progress=False,threads=True,auto_adjust=True)
-            if raw is None or len(raw)==0: continue
+            if raw is None or len(raw)==0:
+                for sym in syms:
+                    try:
+                        df=yf.download(sym,period="60d",interval="1d",
+                                       progress=False,auto_adjust=True)
+                        if df is not None and len(df)>=2:
+                            parsed=_parse_yf_batch(df,[sym])
+                            for tk,dff in parsed.items():
+                                cache_set(tk,"daily",dff); raw_ctx[tk]=dff
+                    except: pass
+                continue
             parsed=_parse_yf_batch(raw, syms)
             for t,df in parsed.items():
                 if len(df)>=2: cache_set(t,"daily",df); raw_ctx[t]=df
