@@ -18,6 +18,10 @@ DISPLAY_TOP    = 50    # top 50 hasil scan
 CACHE_TTL_15M  = 300   # 5 menit untuk 15m data
 CACHE_TTL_D    = 3600  # 1 jam untuk daily data
 
+# Cache directory — /tmp di cloud, home di lokal
+CACHE_DIR = Path("/tmp/cyrus_cache") if Path("/tmp").exists() else Path.home() / ".cyrus_cache"
+CACHE_DIR.mkdir(exist_ok=True)
+
 def _fetch_yf(ticker, interval="15m", force_fresh=False):
     """
     Fetch via yFinance — reliable, no API key needed.
